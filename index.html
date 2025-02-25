@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Improved Vehicle Fuel Log Tracker</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+/* Global Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f4f4; /* Lighter gray background */
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    font-size: 3em; /* Increased font size */
+    color: #28a745; /* Green */
+    margin-bottom: 40px;
+}
+
+h3 {
+    color: #333;
+    font-size: 1.5em; /* Slightly larger */
+    margin-bottom: 20px;
+    color: #28a745; /* Green */
+}
+
+/* Card Style for Sections */
+.card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+
+/* Form Styles */
+form {
+    padding: 0; /* Removed extra padding */
+}
+
+label {
+    font-size: 1em;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 8px;
+    display: block;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="number"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+    background-color: #f9f9f9;
+    box-sizing: border-box;
+}
+
+.form-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group input {
+    width: 100%;
+}
+
+button {
+    background-color: #28a745; /* Green */
+    color: white;
+    padding: 12px 20px; /* Adjusted padding */
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+}
+
+button:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 30px;
+    font-size: 0.9em; /* Slightly smaller font for better readability */
+}
+
+table th,
+table td {
+    padding: 10px; /* Adjusted padding */
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+table th {
+    background-color: #28a745; /* Green */
+    color: white;
+    font-weight: bold;
+}
+
+table tr:hover {
+    background-color: #f2f2f2;
+}
+
+.log-table button {
+    background-color: #dc3545; /* Red */
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 5px; /* Added margin for spacing */
+}
+
+.log-table button:hover {
+    background-color: #c82333; /* Darker red on hover */
+}
+
+/* Clear Logs and Generate Report Section */
+.clear-logs,
+.generate-report,
+.generate-summary {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.clear-logs input {
+    padding: 10px;
+    width: 60%;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+}
+
+
+.generate-report button {
+    background-color: #007bff; /* Blue */
+    width: 200px;
+    margin: 10px 0;
+}
+
+.generate-report button:hover {
+    background-color: #0069d9; /* Darker blue on hover */
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .form-group {
+        grid-template-columns: 1fr;
+    }
+
+    button {
+        width: auto;
+        margin-top: 10px;
+    }
+
+    .clear-logs input {
+        width: 100%;
+    }
+
+    .generate-report button {
+        width: 100%;
+    }
+}
+
+/* Make the table scrollable on smaller screens */
+.log-table {
+    overflow-x: auto;
+}
+.error-message{
+    color:red;
+    font-size:14px;
+    margin-top:5px;
+}
+.success-message{
+    color:green;
+}
+.form-group.error {
+    border: 2px solid #dc3545; /* Red border for error */
+}
+.form-group.error label,
+.form-group.error input{
+    color: red;
+}
+.progress-bar {
+    width: 0%;
+    height: 20px;
+    background-image: linear-gradient(to right, #28a745, #4CAF50); /* Green Gradient */
+    border-radius: 5px;
+    margin-top: 5px;
+}
+
+#progress-container {
+    margin-top: 10px;
+    display: none;
+}
+
+#progress-label {
+    margin-left: 5px;
+}
+
+.summary-popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #e0f7fa; /* Light blue background */
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    max-width: 600px;
+    overflow-y: auto;
+}
+
+.summary-popup .popup-content {
+    position: relative; /* For absolute positioning of close button */
+}
+
+.summary-popup h3 {
+    background-color: black; /* Or #000000 */
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    color: white; /* Important for readability */
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center; /* Center the title */
+
+}
+
+.summary-popup .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold; /* Make close button more noticeable */
+    color: #dc3545; /* Red close button */
+}
+
+.summary-popup .summary-table-container {
+    overflow-x: auto; /* Allow horizontal scrolling if needed */
+}
+
+.summary-popup table td,
+.summary-popup table th {
+    color: black; /* Set text color to black */
+}
+
+.summary-popup table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1em;
+    border-spacing: 0; /* Remove extra spacing between table cells */
+    margin-bottom: 20px;
+}
+
+.summary-popup th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+.summary-popup td:nth-child(3),
+.summary-popup td:nth-child(4),
+.summary-popup td:nth-child(5),
+.summary-popup td:nth-child(6) {
+    text-align: right;
+}
+
+/*Added Styles for better layout*/
+.registration, .fuel-log, .log-table, .clear-logs, .generate-report, .generate-summary{
+    margin-bottom: 20px;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vehicle Fuel Log Tracker</h1>
+
+        <!-- Vehicle Registration -->
+        <div class="card registration">
+            <h3>Register or Edit Vehicle</h3>
+            <form id="vehicle-form">
+                <label for="vehicle-id">Vehicle ID:</label>
+                <input type="text" id="vehicle-id" placeholder="Enter vehicle ID" required>
+                <span id="vehicle-id-error" class="error-message"></span>
+
+                <div class="form-group">
+                    <div>
+                        <label for="vehicle-plate">Plate Number:</label>
+                        <input type="text" id="vehicle-plate" placeholder="Enter plate number" required>
+                        <span id="vehicle-plate-error" class="error-message"></span>
+                    </div>
+                    <div>
+                        <label for="vehicle-name">Vehicle Name:</label>
+                        <input type="text" id="vehicle-name" placeholder="Enter vehicle name" required>
+                    </div>
+                </div>
+
+                <label for="driver-name">Driver Name:</label>
+                <input type="text" id="driver-name" placeholder="Enter driver name" required>
+
+                <label for="admin-password">Admin Password (for Editing):</label>
+                <input type="password" id="admin-password" placeholder="Enter Admin Password (optional)">
+
+                <button type="submit">Register/Edit Vehicle</button>
+                <div id="vehicle-form-message"></div>
+            </form>
+        </div>
+
+
+        <!-- Fuel Log Form -->
+        <div class="card fuel-log">
+            <h3>Fuel Log Entry</h3>
+            <form id="fuel-form">
+                <div class="form-group">
+                    <label for="fuel-date">Date (YYYY-MM-DD):</label>
+                    <input type="date" id="fuel-date" required>
+                    <span class="error-message" id="fuel-date-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="km-reading">Actual KM Reading:</label>
+                    <input type="number" id="km-reading" placeholder="Enter KM reading" required min="0">
+                    <span class="error-message" id="km-reading-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="fuel-quantity">Fuel Quantity (L):</label>
+                    <input type="number" id="fuel-quantity" placeholder="Enter fuel quantity" required min="0">
+                    <span class="error-message" id="fuel-quantity-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="fuel-cost">Fuel Cost (CFA):</label>
+                    <input type="number" id="fuel-cost" placeholder="Enter fuel cost in CFA" required min="0">
+                    <span class="error-message" id="fuel-cost-error"></span>
+                </div>
+
+                <button type="submit">Add Log</button>
+                <div id="fuel-form-message"></div>
+            </form>
+        </div>
+
+        <!-- Fuel Log Table -->
+        <div class="card log-table">
+            <h3>Fuel Log Entries</h3>
+            <table id="fuel-log-table">
+                <thead>
+                    <tr>
+                        <th>Vehicle ID</th>
+                        <th>Plate Number</th>
+                        <th>Date</th>
+                        <th>KM Reading</th>
+                        <th>KM Traverse</th>
+                        <th>Fuel Quantity (L)</th>
+                        <th>Consumption (km/L)</th>
+                        <th>Fuel Cost (CFA)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Logs will appear here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Clear Logs with Admin Password -->
+        <div class="card clear-logs">
+            <h3>Clear All Logs</h3>
+            <input type="password" id="admin-password-clear" placeholder="Enter Admin Password">
+            <button id="clear-logs-btn">Clear All Logs</button>
+            <div id="clear-logs-message"></div>
+        </div>
+
+        <!-- Generate Report -->
+        <div class="card generate-report">
+            <h3>Generate Fuel Report for Specific Vehicle</h3>
+            <label for="vehicle-id-report">Vehicle ID:</label>
+            <input type="text" id="vehicle-id-report" placeholder="Enter Vehicle ID">
+            <button id="generate-report-btn">Generate Report</button>
+        </div>
+
+        <!-- Generate Full Report -->
+        <div class="card generate-report">
+            <h3>Generate Full Fuel Report</h3>
+            <button id="generate-full-report-btn">Generate Full Report</button>
+        </div>
+        <div id="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+            <span id="progress-label">0%</span>
+        </div>
+
+        <div class="card generate-summary">
+            <h3>Generate Vehicle Consumption Summary</h3>
+            <button id="generate-summary-btn">Generate Summary</button>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        //Module for form validation
+const formValidator = {
+    validateVehicleForm: function() {
+        let isValid = true;
+        const vehicleId = document.getElementById("vehicle-id").value.trim();
+        const plateNumber = document.getElementById("vehicle-plate").value.trim();
+        const vehicleIdError = document.getElementById('vehicle-id-error');
+        const vehiclePlateError = document.getElementById('vehicle-plate-error');
+
+        vehicleIdError.textContent = '';
+        vehiclePlateError.textContent = '';
+
+        if (vehicleId.length < 3) {
+            vehicleIdError.textContent = "Vehicle ID must be at least 3 characters long.";
+            isValid = false;
+        }
+        if (plateNumber.length < 4) {
+            vehiclePlateError.textContent = "Plate number must be at least 4 characters long.";
+            isValid = false;
+        }
+        return isValid;
+    },
+    validateFuelForm: function() {
+        let isValid = true;
+        const date = document.getElementById("fuel-date").value;
+        const kmReading = parseInt(document.getElementById("km-reading").value);
+        const fuelQuantity = parseInt(document.getElementById("fuel-quantity").value);
+        const fuelCost = parseInt(document.getElementById("fuel-cost").value);
+        const dateError = document.getElementById("fuel-date-error");
+        const kmReadingError = document.getElementById("km-reading-error");
+        const fuelQuantityError = document.getElementById("fuel-quantity-error");
+        const fuelCostError = document.getElementById("fuel-cost-error");
+
+        dateError.textContent = '';
+        kmReadingError.textContent = '';
+        fuelQuantityError.textContent = '';
+        fuelCostError.textContent = '';
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            dateError.textContent = "Invalid date format (YYYY-MM-DD).";
+            isValid = false;
+        }
+        if (isNaN(kmReading) || kmReading < 0) {
+            kmReadingError.textContent = "KM reading must be a non-negative integer.";
+            isValid = false;
+        }
+        if (isNaN(fuelQuantity) || fuelQuantity <= 0) {
+            fuelQuantityError.textContent = "Fuel quantity must be a positive number.";
+            isValid = false;
+        }
+        if (isNaN(fuelCost) || fuelCost < 0) {
+            fuelCostError.textContent = "Fuel cost must be a non-negative number.";
+            isValid = false;
+        }
+        return isValid;
+    }
+};
+
+
+// Module for local storage management (replace with backend integration later)
+const storageManager = {
+    getVehicle: function(idOrPlate) {
+        return JSON.parse(localStorage.getItem(idOrPlate));
+    },
+    setVehicle: function(vehicle) {
+        localStorage.setItem(vehicle.vehicleId, JSON.stringify(vehicle));
+        localStorage.setItem(vehicle.plateNumber, JSON.stringify(vehicle));
+    },
+    getFuelLogs: function() {
+        return JSON.parse(localStorage.getItem("fuelLogs")) || [];
+    },
+    setFuelLogs: function(logs) {
+        localStorage.setItem("fuelLogs", JSON.stringify(logs));
+    },
+    clearFuelLogs: function() {
+        localStorage.removeItem("fuelLogs");
+    }
+};
+
+// Module for data processing and report generation
+const dataProcessor = {
+    calculateKmTraverse: function(logs, kmReading) {
+        const lastLog = logs.slice(-1)[0];
+        return lastLog ? kmReading - lastLog.kmReading : kmReading;
+    },
+    calculateFuelConsumption: function(kmTraverse, fuelQuantity) {
+        return fuelQuantity > 0 ? (kmTraverse / fuelQuantity).toFixed(2) : 0;
+    },
+    generateExcelReport: function(logs, filename) {
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(logs);
+        XLSX.utils.book_append_sheet(wb, ws, "Fuel Log");
+        XLSX.writeFile(wb, filename);
+    },
+    generateFullReport: function(logs) {
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressLabel = document.getElementById('progress-label');
+
+        if (logs.length === 0) {
+            alert("No logs found.");
+            return;
+        }
+
+        progressContainer.style.display = 'block'; // Show progress bar
+        let progress = 0;
+
+        const intervalId = setInterval(() => {
+            progress += 10;
+            progressBar.style.width = progress + '%';
+            progressLabel.textContent = progress + '%';
+            if (progress >= 100) {
+                clearInterval(intervalId);
+                progressContainer.style.display = 'none'; //Hide progress bar after completion
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet([
+                    ["Vehicle ID", "Plate Number", "Date", "KM Reading", "KM Traverse", "Fuel Quantity (L)", "Consumption (km/L)", "Fuel Cost (CFA)"], // Header row
+                    ...logs.map(log => [log.vehicleId, log.plateNumber, log.date, log.kmReading, log.kmTraverse, log.fuelQuantity, log.fuelConsumption, log.fuelCost])
+                ]);
+
+                // Add formulas for totals (assuming data starts from row 2, adjust as needed)
+                const lastRow = logs.length + 1;
+                ws[`I${lastRow}`] = {t: 'n', f: `SUM(H2:H${lastRow})`, v: 0}; // Sum of Fuel Cost
+                ws[`F${lastRow}`] = {t: 'n', f: `SUM(E2:E${lastRow})`, v: 0}; // Sum of Fuel Quantity
+                ws[`E${lastRow}`] = {t: 'n', f: `SUM(D2:D${lastRow})`, v: 0}; // Sum of KM Traversed
+
+
+                // Adjust column widths (optional)
+                ws['!cols'] = [
+                    {wpx: 100}, // Vehicle ID
+                    {wpx: 100}, // Plate Number
+                    {wpx: 100}, // Date
+                    {wpx: 100}, // KM Reading
+                    {wpx: 100}, // KM Traverse
+                    {wpx: 100}, // Fuel Quantity
+                    {wpx: 100}, // Consumption
+                    {wpx: 100}, // Fuel Cost
+                    {wpx: 100}  // Total Fuel Cost
+                ];
+
+                XLSX.utils.book_append_sheet(wb, ws, "Fuel Log");
+                XLSX.writeFile(wb, "full_fuel_report.xlsx");
+            }
+        }, 500); //Simulate 1 second intervals (adjust as needed)
+    },
+    calculateConsumptionSummary: function(vehicleId) {
+        const logs = storageManager.getFuelLogs();
+        const summary = {};
+
+        const filteredLogs = logs.filter(log => log.vehicleId === vehicleId);
+
+        if (filteredLogs.length === 0) {
+            return null; // Return null if no logs are found for the vehicle
+        }
+
+        filteredLogs.forEach(log => {
+            if (!summary[log.vehicleId]) {
+                summary[log.vehicleId] = {
+                    vehicleId: log.vehicleId,
+                    plateNumber: log.plateNumber,
+                    totalConsumption: 0,
+                    totalFuelCost: 0,
+                    totalFuelQuantity: 0,
+                    totalKmTraverse: 0,
+                    averageConsumption: 0,
+                };
+            }
+            summary[log.vehicleId].totalConsumption += parseFloat(log.fuelConsumption);
+            summary[log.vehicleId].totalFuelCost += parseFloat(log.fuelCost);
+            summary[log.vehicleId].totalFuelQuantity += parseFloat(log.fuelQuantity);
+            summary[log.vehicleId].totalKmTraverse += parseFloat(log.kmTraverse);
+        });
+
+        for (const vehicleId in summary){
+            if(summary[vehicleId].totalFuelQuantity > 0){
+                summary[vehicleId].averageConsumption = (summary[vehicleId].totalKmTraverse / summary[vehicleId].totalFuelQuantity).toFixed(2);
+            } else {
+                summary[vehicleId].averageConsumption = 0;
+            }
+        }
+
+        return Object.values(summary)[0]; // Return the summary for the specific vehicle
+    }
+};
+
+// Event handlers and main logic
+document.getElementById("vehicle-form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const messageDiv = document.getElementById('vehicle-form-message');
+    messageDiv.innerHTML = '';
+
+    if (!formValidator.validateVehicleForm()) return;
+
+    const vehicle = {
+        vehicleId: document.getElementById("vehicle-id").value,
+        plateNumber: document.getElementById("vehicle-plate").value,
+        vehicleName: document.getElementById("vehicle-name").value,
+        driverName: document.getElementById("driver-name").value,
+    };
+    const password = document.getElementById("admin-password").value;
+
+    if (storageManager.getVehicle(vehicle.vehicleId) || storageManager.getVehicle(vehicle.plateNumber)) {
+        if (password === "admin") {
+            storageManager.setVehicle(vehicle);
+            messageDiv.innerHTML = "<p class='success-message'>Vehicle details updated successfully!</p>";
+        } else {
+            messageDiv.innerHTML = "<p class='error-message'>Incorrect admin password. Cannot edit.</p>";
+        }
+    } else {
+        storageManager.setVehicle(vehicle);
+        messageDiv.innerHTML = "<p class='success-message'>Vehicle registered successfully!</p>";
+    }
+    document.getElementById("vehicle-form").reset();
+});
+
+// Auto-fill vehicle details based on Vehicle ID or Plate Number
+document.getElementById("vehicle-id").addEventListener("input", function() {
+    const vehicleId = document.getElementById("vehicle-id").value;
+    const storedVehicle = storageManager.getVehicle(vehicleId);
+
+    if (storedVehicle) {
+        document.getElementById("vehicle-name").value = storedVehicle.vehicleName;
+        document.getElementById("vehicle-plate").value = storedVehicle.plateNumber;
+        document.getElementById("driver-name").value = storedVehicle.driverName;
+    }
+});
+
+document.getElementById("vehicle-plate").addEventListener("input", function() {
+    const plateNumber = document.getElementById("vehicle-plate").value;
+    const storedVehicle = storageManager.getVehicle(plateNumber);
+
+    if (storedVehicle) {
+        document.getElementById("vehicle-id").value = storedVehicle.vehicleId;
+        document.getElementById("vehicle-name").value = storedVehicle.vehicleName;
+        document.getElementById("driver-name").value = storedVehicle.driverName;
+    }
+});
+
+document.getElementById("fuel-form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const messageDiv = document.getElementById('fuel-form-message');
+    messageDiv.innerHTML = '';
+
+    if (!formValidator.validateFuelForm()) return;
+
+    const vehicleId = document.getElementById("vehicle-id").value;
+    const plateNumber = document.getElementById("vehicle-plate").value;
+    const vehicle = storageManager.getVehicle(vehicleId) || storageManager.getVehicle(plateNumber);
+
+
+    if (!vehicle) {
+      messageDiv.innerHTML = "<p class='error-message'>Please select a valid vehicle.</p>";
+      return;
+    }
+
+    const date = document.getElementById("fuel-date").value;
+    const kmReading = parseInt(document.getElementById("km-reading").value);
+    const fuelQuantity = parseInt(document.getElementById("fuel-quantity").value);
+    const fuelCost = parseInt(document.getElementById("fuel-cost").value);
+
+    const logs = storageManager.getFuelLogs();
+    const vehicleLogs = logs.filter(log => log.plateNumber === vehicle.plateNumber);
+    const kmTraverse = dataProcessor.calculateKmTraverse(vehicleLogs, kmReading);
+    const fuelConsumption = dataProcessor.calculateFuelConsumption(kmTraverse, fuelQuantity);
+
+
+    const log = {
+        vehicleId: vehicle.vehicleId,
+        plateNumber: vehicle.plateNumber,
+        date,
+        kmReading,
+        kmTraverse,
+        fuelQuantity,
+        fuelConsumption,
+        fuelCost,
+    };
+
+    logs.push(log);
+    storageManager.setFuelLogs(logs);
+
+    renderLogs();
+    e.target.reset();
+    messageDiv.innerHTML = "<p class='success-message'>Log added successfully!</p>";
+});
+
+// Function to render the fuel log entries in the table
+function renderLogs() {
+    const logs = storageManager.getFuelLogs();
+    const tableBody = document.getElementById("fuel-log-table").getElementsByTagName("tbody")[0];
+    tableBody.innerHTML = "";
+
+    logs.forEach((log, index) => {
+        const row = tableBody.insertRow();
+        row.innerHTML = `
+            <td>${log.vehicleId}</td>
+            <td>${log.plateNumber}</td>
+            <td>${log.date}</td>
+            <td>${log.kmReading}</td>
+            <td>${log.kmTraverse}</td>
+            <td>${log.fuelQuantity}</td>
+            <td>${log.fuelConsumption}</td>
+            <td>${log.fuelCost}</td>
+            <td><button onclick="deleteLog(${index})">Delete</button></td>
+        `;
+    });
+}
+
+// Function to delete a log entry
+function deleteLog(index) {
+    if (confirm("Are you sure you want to delete this log entry?")) {
+        const logs = storageManager.getFuelLogs();
+        logs.splice(index, 1);
+        storageManager.setFuelLogs(logs);
+        renderLogs();
+    }
+}
+
+
+document.getElementById("clear-logs-btn").addEventListener("click", function() {
+    const password = document.getElementById("admin-password-clear").value;
+    const messageDiv = document.getElementById('clear-logs-message');
+    messageDiv.innerHTML = '';
+
+    if (password === "admin") {
+        storageManager.clearFuelLogs();
+        messageDiv.innerHTML = "<p class='success-message'>All logs have been cleared.</p>";
+        renderLogs();
+    } else {
+        messageDiv.innerHTML = "<p class='error-message'>Incorrect password.</p>";
+    }
+});
+
+
+document.getElementById("generate-report-btn").addEventListener("click", function() {
+    const logs = storageManager.getFuelLogs();
+    const vehicleId = document.getElementById("vehicle-id-report").value;
+    const filteredLogs = logs.filter(log => log.vehicleId === vehicleId);
+
+    if (filteredLogs.length === 0) {
+        alert("No logs found for this vehicle ID.");
+        return;
+    }
+
+    dataProcessor.generateExcelReport(filteredLogs, `${vehicleId}_fuel_report.xlsx`);
+});
+
+document.getElementById("generate-full-report-btn").addEventListener("click", function() {
+    dataProcessor.generateFullReport(storageManager.getFuelLogs());
+});
+
+
+function createSummaryPopup(summaryData) {
+    if (!summaryData) {
+        alert("No fuel logs found for this vehicle.");
+        return;
+    }
+
+    const popup = document.createElement('div');
+    popup.className = 'summary-popup';
+    popup.innerHTML = `
+        <div class="popup-content">
+            <span class="close-button">×</span>
+            <h3>Vehicle Consumption Summary</h3>
+            <div class="summary-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vehicle ID</th>
+                            <th>Plate Number</th>
+                            <th>Avg. Consumption (km/L)</th>
+                            <th>Total Fuel Cost (CFA)</th>
+                            <th>Total Fuel (L)</th>
+                            <th>Total KM Traversed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${summaryData.vehicleId}</td>
+                            <td>${summaryData.plateNumber}</td>
+                            <td>${summaryData.averageConsumption}</td>
+                            <td>${summaryData.totalFuelCost.toFixed(2)}</td>
+                            <td>${summaryData.totalFuelQuantity.toFixed(2)}</td>
+                            <td>${summaryData.totalKmTraverse.toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(popup);
+    popup.style.display = 'block';
+
+
+    // Event listener for the close button
+    const closeButton = popup.querySelector('.close-button');
+    closeButton.addEventListener('click', () => {
+        document.body.removeChild(popup);
+    });
+}
+
+
+document.getElementById("generate-summary-btn").addEventListener("click", () => {
+    const vehicleId = prompt("Enter the Vehicle ID for the summary:");
+    if (vehicleId) {
+        const summaryData = dataProcessor.calculateConsumptionSummary(vehicleId);
+        createSummaryPopup(summaryData);
+    }
+});
+
+// Render logs when the page loads
+renderLogs();
+
+$(document).ready(function() {
+    $('#fuel-log-table').DataTable();
+});
+    </script>
+</body>
+</html>
